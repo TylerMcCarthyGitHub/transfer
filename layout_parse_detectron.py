@@ -1,34 +1,25 @@
-const UIService = {
-    originalCameraTarget: null,
-    originalCameraOrbit: null,
+// Add a method to filter data for a specific area and within a month
+filterDataForAreaAndMonth: function(data, area) {
+    const currentDate = new Date();
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(currentDate.getMonth() - 1);
 
-    // ... other properties and methods ...
-
-    startupUI: function() {
-        // ... other startup code ...
-
-        // Initialize original camera position
-        let modelViewer = document.querySelector("#model_viewer");
-        UIService.originalCameraTarget = modelViewer.cameraTarget;
-        UIService.originalCameraOrbit = modelViewer.cameraOrbit;
-    },
-
-    toggleStationLevel: function(parent_id) {
-        let modelViewer = document.querySelector("#model_viewer");
-        if($("#"+parent_id).hasClass("currentlyOpen")) {
-            // Reset the camera position to original
-            modelViewer.cameraTarget = UIService.originalCameraTarget;
-            modelViewer.cameraOrbit = UIService.originalCameraOrbit;
-
-            // ... rest of your existing code for handling currently open parent ...
-        } else {
-            // Change camera position for selected parent station
-            modelViewer.cameraTarget = $("#" + parent_id).data("position");
-            modelViewer.cameraOrbit = $("#" + parent_id).data("orbit");
-
-            // ... rest of your existing code for handling not currently open parent ...
+    return data.filter(route => {
+        // Filter by area
+        if (route.title === area) {
+            // Filter by timestamp within the last month
+            return route.stations.some(station => {
+                return station.machine_descriptors.some(descriptor => {
+                    return descriptor.datapoints.some(dp => {
+                        if (dp.timestamp) {
+                            const dpTimestamp = new Date(dp.timestamp);
+                            return dpTimestamp >= oneMonthAgo;
+                        }
+                        return false;
+                    });
+                });
+            });
         }
-    },
-
-    // ... other methods ...
-};
+        return false;
+    });
+},
